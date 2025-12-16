@@ -1,0 +1,34 @@
+# .github/workflows/devsecops.yml
+name: DevSecOps Pipeline
+
+on: [push]
+
+jobs:
+  sast-scan:
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: python
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
+
+  sca-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Build the Docker image
+        run: docker build . --file Dockerfile --tag my-app:latest
+
+      - name: Scan image with Grype
+        uses: anchore/grype-action@v3
+        with:
+          image: "my-app:latest"
+          fail-on-severity: "high" # Fail the build if a high-severity CVE is found
